@@ -1,0 +1,39 @@
+# OurNook Python dependencies (the runtime requirements, not build-time)
+# Install with: pip install -r requirements.txt
+#
+# Note: PyInstaller bundles all of these into the .app / .exe — end users
+# don't need to install anything.
+
+# Core web framework + ASGI server
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.30,<1.0
+
+# HTTP client (for talking to Ollama)
+httpx>=0.27,<1.0
+
+# Data validation
+pydantic>=2.6,<3.0
+
+# SQLite (async wrapper)
+aiosqlite>=0.20,<1.0
+
+# WebView wrapper (the app window)
+pywebview>=5.0,<7.0
+pywebview-platform>=5.0  # auto-installed by pywebview; pin for safety
+
+# --- Real diffusion image gen (v0.15.2) -------------------------------------
+# These power `_try_diffusers_image()` in api/ollama.py — the local SDXL-turbo
+# path that gives photorealistic images in 3-4s on Apple Silicon (MPS) and
+# CUDA Windows. Bundled inside the .app / .exe so end users don't need to
+# install anything. On a CPU-only Windows machine the first image is slow
+# (1-3 min) and subsequent images are 15-30s; on an NVIDIA GPU it's <5s.
+#
+# We pin specific versions because the HF/diffusers stack has been
+# incompatible across releases; this is the combination that works on
+# Python 3.12 (Windows CI) and Python 3.14 (local Mac).
+torch>=2.1,<3.0
+diffusers>=0.30,<1.0
+transformers>=4.40,<5.0
+accelerate>=0.30,<2.0
+safetensors>=0.4,<1.0
+Pillow>=10.0,<12.0

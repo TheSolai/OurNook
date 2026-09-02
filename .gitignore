@@ -1,0 +1,35 @@
+target/
+dist/
+build/
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Tauri (dead — see DD.md)
+src-tauri/target/
+src-tauri/gen/
+nook-tauri/
+nook-core/
+
+# Build artifacts
+*.bak-*
+release-staging/
+# OurNook.spec and OurNook-windows.spec ARE committed — the release
+# workflow runs `pyinstaller <spec>` on tag push.
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db

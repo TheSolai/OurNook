@@ -1,0 +1,84 @@
+{
+  "app": {
+    "name": "Nook",
+    "tagline": "A cozy corner you build and nobody can take away."
+  },
+  "status": {
+    "ollama_healthy": "Ollama is running",
+    "ollama_offline": "Ollama is not reachable",
+    "ollama_check": "Checking Ollama...",
+    "ollama_setup_hint": "Start Ollama, then Nook will detect it automatically.",
+    "image_gen_unsupported": "Image gen needs a model installed — visit the Models tab.",
+    "loading": "Loading...",
+    "ready": "Ready"
+  },
+  "nav": {
+    "chat": "Chat",
+    "memory": "Memory",
+    "art": "Art",
+    "models": "Models",
+    "settings": "Settings",
+    "cards": "Cards",
+    "inner": "Inner life"
+  },
+  "companion": {
+    "roster": "Companions",
+    "select_to_chat": "Select a companion to start",
+    "new_companion": "New companion",
+    "delete": "Delete",
+    "confirm_delete": "Delete this companion? Their memory will be lost.",
+    "no_companions": "No companions yet. Nook ships with three — pick one to begin."
+  },
+  "chat": {
+    "input_placeholder": "Say something...",
+    "send": "Send",
+    "thinking": "thinking...",
+    "voice_mode": "Voice",
+    "text_mode": "Text"
+  },
+  "settings": {
+    "language": "Language",
+    "ollama_url": "Ollama URL",
+    "default_model": "Default model",
+    "embed_model": "Embedding model",
+    "theme": "Theme",
+    "auto": "Auto",
+    "light": "Light",
+    "dark": "Dark",
+    "save": "Save",
+    "saved": "Saved",
+    "overlay_mode": "Always-on-top overlay"
+  },
+  "memory": {
+    "title": "Memory",
+    "episodic": "Session summaries",
+    "semantic": "Facts about you",
+    "diary": "Diary",
+    "no_memories": "No memories yet — start chatting.",
+    "auto_extract": "Auto-extract facts from chat",
+    "extracting": "Thinking…",
+    "add_fact": "Add a fact about the user…",
+    "save_summary": "Save summary",
+    "no_summaries": "No session summaries yet.",
+    "no_diary": "No diary entries yet."
+  },
+  "art": {
+    "title": "Companion Art",
+    "prompt_placeholder": "Describe what you want to generate...",
+    "negative_prompt": "What to avoid (optional)",
+    "size": "Size",
+    "model": "Model",
+    "seed": "Seed (optional)",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "history": "History",
+    "no_art_yet": "No art yet. Try a prompt."
+  },
+  "interactions": {
+    "pat": "pat",
+    "bonk": "bonk",
+    "poke": "poke",
+    "hug": "hug",
+    "wave": "wave"
+  }
+}
