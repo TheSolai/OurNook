@@ -7,121 +7,161 @@ on:
   workflow_dispatch:  # manual trigger
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-14        # Apple Silicon (M1/M2/M3/M4)
-            artifact_name: OurNook-macOS-arm64
-            asset_name: OurNook-${{ github.ref_name }}-macOS-arm64
-            spec: OurNook.spec
-            torch_index: ""     # default macOS arm64 wheel — supports MPS
-            venv_python: ".venv/bin/python"
-          - os: macos-13        # Intel Macs
-            artifact_name: OurNook-macOS-x64
-            asset_name: OurNook-${{ github.ref_name }}-macOS-x64
-            spec: OurNook.spec
-            env_arch: x86_64
-            torch_index: ""     # default macOS x86_64 wheel
-            venv_python: ".venv/bin/python"
-          - os: windows-latest
-            artifact_name: OurNook-Windows-x64
-            asset_name: OurNook-${{ github.ref_name }}-Windows-x64
-            spec: OurNook-windows.spec
-            torch_index: "--extra-index-url https://download.pytorch.org/whl/cpu"
-            venv_python: ".venv/Scripts/python.exe"
-
+  # macOS Apple Silicon (M1/M2/M3/M4) — pyinstaller OurNook.spec, hdiutil DMG
+  build-macos-arm64:
+    name: Build (macOS arm64)
+    runs-on: macos-14
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - name: Set up Node (for frontend build)
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: pnpm
 
       - name: Build frontend
         run: pnpm install --frozen-lockfile && pnpm build
 
-      - name: Install Python deps
-        shell: bash
+      - name: Set up venv + install deps
         run: |
           python -m venv .venv
-          # Use the venv python directly via `python -m` so we never depend
-          # on the activate script (which has historically broken on the
-          # bash-on-Windows runner — perm denied / Scriptsactivate mangling).
-          PIP="${{ matrix.venv_python }} -m pip"
-          ${{ matrix.venv_python }} -m pip install -U pip wheel
-          ${{ matrix.venv_python }} -m pip install pyinstaller
-          # CPU-only torch on Windows (smaller, runner has no GPU anyway).
-          # Mac gets the default wheel so MPS works at runtime.
-          ${{ matrix.venv_python }} -m pip install ${{ matrix.torch_index }} torch
-          ${{ matrix.venv_python }} -m pip install -r requirements.txt || true
-          # Fallback: install the specific deps we know we need, including
-          # the diffusers/transformers/safetensors stack for v0.15.2 real
-          # diffusion image gen.
-          ${{ matrix.venv_python }} -m pip install fastapi 'uvicorn[standard]' httpx pydantic aiosqlite pywebview
-          ${{ matrix.venv_python }} -m pip install diffusers transformers accelerate safetensors Pillow
+          .venv/bin/python -m pip install -U pip wheel
+          .venv/bin/python -m pip install pyinstaller
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install diffusers transformers accelerate safetensors Pillow
 
       - name: Build with PyInstaller
-        shell: bash
-        run: |
-          ${{ matrix.venv_python }} -m PyInstaller ${{ matrix.spec }} --noconfirm --clean
+        run: .venv/bin/python -m PyInstaller OurNook.spec --noconfirm --clean
 
-      - name: Package macOS .dmg
-        if: matrix.os == 'macos-14' || matrix.os == 'macos-13'
+      - name: Package DMG
         run: |
-          mkdir -p dist/release-staging
-          # Clean staging
-          find dist/release-staging -mindepth 1 -delete 2>/dev/null || true
           mkdir -p dist/release-staging
           cp -R dist/OurNook.app dist/release-staging/
           ln -s /Applications dist/release-staging/Applications
-          VOLNAME="OurNook ${{ github.ref_name }}"
-          hdiutil create -volname "$VOLNAME" \
+          hdiutil create -volname "OurNook ${{ github.ref_name }}" \
             -srcfolder dist/release-staging \
             -ov -format UDZO \
-            dist/${{ matrix.asset_name }}.dmg
-        shell: bash
+            dist/OurNook-${{ github.ref_name }}-macOS-arm64.dmg
 
-      - name: Package Windows .zip
-        if: matrix.os == 'windows-latest'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OurNook-macOS-arm64
+          path: dist/OurNook-*.dmg
+
+  # macOS Intel — pyinstaller OurNook.spec, hdiutil DMG
+  build-macos-x64:
+    name: Build (macOS x64)
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        run: pnpm install --frozen-lockfile && pnpm build
+
+      - name: Set up venv + install deps
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -U pip wheel
+          .venv/bin/python -m pip install pyinstaller
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install diffusers transformers accelerate safetensors Pillow
+
+      - name: Build with PyInstaller
+        run: .venv/bin/python -m PyInstaller OurNook.spec --noconfirm --clean
+
+      - name: Package DMG
+        run: |
+          mkdir -p dist/release-staging
+          cp -R dist/OurNook.app dist/release-staging/
+          ln -s /Applications dist/release-staging/Applications
+          hdiutil create -volname "OurNook ${{ github.ref_name }}" \
+            -srcfolder dist/release-staging \
+            -ov -format UDZO \
+            dist/OurNook-${{ github.ref_name }}-macOS-x64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OurNook-macOS-x64
+          path: dist/OurNook-*.dmg
+
+  # Windows x64 — CPU-only torch, OurNook-windows.spec, 7z zip
+  build-windows:
+    name: Build (Windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        run: pnpm install --frozen-lockfile && pnpm build
+
+      - name: Set up venv + install deps
         shell: bash
         run: |
-          # Use 7-zip to make a smaller archive
-          7z a -tzip -mx=9 "dist/${{ matrix.asset_name }}.zip" dist/OurNook
+          python -m venv .venv
+          .venv/Scripts/python.exe -m pip install -U pip wheel
+          .venv/Scripts/python.exe -m pip install pyinstaller
+          .venv/Scripts/python.exe -m pip install --extra-index-url https://download.pytorch.org/whl/cpu torch
+          .venv/Scripts/python.exe -m pip install -r requirements.txt
+          .venv/Scripts/python.exe -m pip install diffusers transformers accelerate safetensors Pillow
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Build with PyInstaller
+        shell: bash
+        run: .venv/Scripts/python.exe -m PyInstaller OurNook-windows.spec --noconfirm --clean
+
+      - name: Package zip
+        shell: bash
+        run: 7z a -tzip -mx=9 dist/OurNook-${{ github.ref_name }}-Windows-x64.zip dist/OurNook
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: |
-            dist/${{ matrix.asset_name }}.dmg
-            dist/${{ matrix.asset_name }}.zip
-            dist/OurNook.app/**/*
-            dist/OurNook/OurNook.exe
-            dist/OurNook/_internal/**
+          name: OurNook-Windows-x64
+          path: dist/OurNook-*.zip
 
-      - name: Attach to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+  attach-release:
+    name: Attach artifacts to GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v') && always()
+    needs: [build-macos-arm64, build-macos-x64, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/${{ matrix.asset_name }}.dmg
-            dist/${{ matrix.asset_name }}.zip
+            artifacts/OurNook-macOS-arm64/OurNook-*.dmg
+            artifacts/OurNook-macOS-x64/OurNook-*.dmg
+            artifacts/OurNook-Windows-x64/OurNook-*.zip
           fail_on_unmatched_files: false
