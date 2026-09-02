@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OurNook — A cozy corner you build and nobody can take away</title>
+  <meta name="description" content="A local-first AI companion hub. Powered by Ollama, with persistent memory, real diffusion image gen, and Enneagram personalities. 100% on your machine. No cloud, no account." />
+  <meta property="og:title" content="OurNook — A cozy corner you build" />
+  <meta property="og:description" content="Local-first AI companions with real memory, real personality, and real images. macOS + Windows. Yours forever." />
+  <meta property="og:image" content="hero/hero-noon.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <style>
+    :root {
+      --bg: #1a1614;
+      --bg-2: #221d1a;
+      --bg-3: #2a2421;
+      --ink: #efe4d8;
+      --ink-2: #b8a99b;
+      --ink-3: #7c6e63;
+      --rose: #d4a59a;
+      --rose-2: #b87d6e;
+      --rose-glow: rgba(212, 165, 154, 0.18);
+      --sage: #9eb29b;
+      --gold: #d4b97a;
+      --line: rgba(184, 169, 155, 0.12);
+      --shadow: 0 24px 60px -20px rgba(0,0,0,0.55);
+      --radius: 14px;
+      --maxw: 1180px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: var(--rose); text-decoration: none; }
+    a:hover { color: var(--ink); }
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* Header */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      background: rgba(26, 22, 20, 0.78);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner {
+      max-width: var(--maxw); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 28px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 600; letter-spacing: 0.2px; }
+    .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--rose), var(--rose-2)); box-shadow: 0 6px 20px var(--rose-glow); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--ink-2); }
+    .nav-links a { color: var(--ink-2); }
+    .nav-cta { background: var(--rose); color: var(--bg); padding: 9px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+    .nav-cta:hover { background: var(--ink); color: var(--bg); }
+
+    /* Hero */
+    .hero {
+      max-width: var(--maxw); margin: 0 auto;
+      padding: 80px 28px 40px;
+      text-align: center;
+      position: relative;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 700px; max-width: 90vw;
+      background: radial-gradient(circle, var(--rose-glow) 0%, transparent 65%);
+      z-index: -1; pointer-events: none;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(212, 165, 154, 0.06);
+      color: var(--ink-2); font-size: 13px;
+      margin-bottom: 28px;
+    }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 10px var(--sage); }
+    h1 {
+      font-size: clamp(40px, 6.4vw, 76px);
+      font-weight: 700; line-height: 1.04; letter-spacing: -0.025em;
+      margin-bottom: 24px;
+      background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    h1 em { font-style: italic; font-weight: 500; color: var(--rose); -webkit-text-fill-color: var(--rose); }
+    .tagline { color: var(--ink-2); font-size: clamp(16px, 1.8vw, 20px); max-width: 640px; margin: 0 auto 40px; }
+    .ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 26px; border-radius: 12px; font-size: 15px; font-weight: 600;
+      transition: all 0.2s; cursor: pointer; border: none;
+    }
+    .btn-primary { background: var(--rose); color: var(--bg); box-shadow: 0 12px 30px -10px var(--rose-glow); }
+    .btn-primary:hover { background: var(--ink); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .btn-ghost:hover { background: var(--bg-2); border-color: var(--ink-3); }
+    .meta { margin-top: 22px; color: var(--ink-3); font-size: 13px; }
+
+    /* Hero image */
+    .hero-img {
+      max-width: 1080px; margin: 80px auto 0;
+      border-radius: 22px; overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      position: relative;
+    }
+    .hero-img img { width: 100%; }
+    .hero-img::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(26,22,20,0.4));
+      pointer-events: none;
+    }
+
+    /* Section base */
+    section { padding: 100px 28px; max-width: var(--maxw); margin: 0 auto; }
+    .section-eyebrow {
+      color: var(--rose); font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.15; margin-bottom: 18px; max-width: 760px;
+    }
+    .section-lede { color: var(--ink-2); font-size: 17px; max-width: 640px; margin-bottom: 56px; }
+
+    /* Features */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature {
+      background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: all 0.3s;
+    }
+    .feature:hover { border-color: var(--rose); transform: translateY(-3px); box-shadow: 0 20px 50px -25px var(--rose-glow); }
+    .feature-icon { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; margin-bottom: 22px; }
+    .feature h3 { font-size: 19px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .feature p { color: var(--ink-2); font-size: 15px; }
+
+    /* Comparison */
+    .compare {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      margin-top: 40px;
+    }
+    .compare-card {
+      background: var(--bg-2); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 32px;
+    }
+    .compare-card.theirs { opacity: 0.7; }
+    .compare-card h3 { font-size: 22px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .compare-card .vs { color: var(--ink-3); font-weight: 400; font-size: 14px; }
+    .compare-list { list-style: none; }
+    .compare-list li { padding: 10px 0; border-top: 1px solid var(--line); color: var(--ink-2); display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+    .compare-list li::before { content: '×'; color: var(--ink-3); font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+    .compare-card.ours .compare-list li::before { content: '✓'; color: var(--rose); }
+    .compare-card.ours .compare-list li { color: var(--ink); }
+
+    /* Quote */
+    .quote-block {
+      max-width: 760px; margin: 0 auto; text-align: center;
+      padding: 80px 28px;
+    }
+    .quote {
+      font-size: clamp(22px, 2.6vw, 30px); line-height: 1.4; font-weight: 500;
+      font-style: italic; color: var(--ink); margin-bottom: 22px;
+    }
+    .quote-author { color: var(--ink-3); font-size: 14px; }
+
+    /* Download */
+    .download {
+      background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 56px;
+      text-align: center;
+      margin: 0 28px;
+    }
+    .download h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 700; margin-bottom: 14px; }
+    .download p { color: var(--ink-2); margin-bottom: 36px; max-width: 520px; margin-left: auto; margin-right: auto; }
+    .download-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px; max-width: 800px; margin: 0 auto;
+    }
+    .download-card {
+      background: var(--bg-3);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    .download-card:hover { border-color: var(--rose); transform: translateY(-2px); }
+    .download-card .label { color: var(--ink-3); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 8px; }
+    .download-card h4 { font-size: 20px; margin-bottom: 6px; font-weight: 600; }
+    .download-card .size { color: var(--ink-3); font-size: 13px; margin-bottom: 18px; }
+    .download-card .btn { width: 100%; justify-content: center; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--line); padding: 48px 28px; margin-top: 100px; }
+    .footer-inner { max-width: var(--maxw); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    .footer-inner .brand { color: var(--ink-2); }
+    .footer-links { display: flex; gap: 24px; color: var(--ink-3); font-size: 14px; }
+
+    @media (max-width: 720px) {
+      .compare { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      section { padding: 60px 20px; }
+      .hero { padding: 60px 20px 20px; }
+      .download { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">◉</div>
+      <span>OurNook</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#why">Why local</a>
+      <a href="#download">Download</a>
+    </div>
+    <a href="#download" class="nav-cta">Get OurNook</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="pill"><span class="dot"></span>v0.5.2 — out now</div>
+  <h1>A cozy corner <em>you build</em><br/>and nobody can take away.</h1>
+  <p class="tagline">OurNook is a local-first AI companion hub. Real personalities, real memory, real images — all on your machine, in your control. No cloud, no account, no monthly fee.</p>
+  <div class="ctas">
+    <a href="#download" class="btn btn-primary">↓ Download free</a>
+    <a href="#features" class="btn btn-ghost">See what it does →</a>
+  </div>
+  <p class="meta">macOS (Apple Silicon & Intel) · Windows x64 · 100% offline</p>
+</header>
+
+<div class="hero-img">
+  <img src="hero/hero-noon.png" alt="A cozy reading nook with warm lamp light" />
+</div>
+
+<section id="features">
+  <div class="section-eyebrow">What's inside</div>
+  <h2 class="section-title">Six things that make OurNook different from the rest.</h2>
+  <p class="section-lede">No subscription, no telemetry, no server farm processing your late-night conversations. Just a friendly AI that lives on your computer and remembers you.</p>
+
+  <div class="features-grid">
+    <div class="feature">
+      <div class="feature-icon"><img src="features/feature-memory.png" alt=""/></div>
+      <h3>Memory that actually sticks</h3>
+      <p>Add facts the way you'd tell a friend. OurNook remembers them across sessions, surfaces them naturally in conversation, and learns the difference between important and throwaway.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><img src="features/feature-soul.png" alt=""/></div>
+      <h3>Enneagram personalities</h3>
+      <p>Every companion is built on a real personality framework — not a vibes-based prompt. Nine types, wings, instincts, health levels. Their voice is consistent because the system is rigorous.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><img src="features/feature-local.png" alt=""/></div>
+      <h3>100% on your machine</h3>
+      <p>Powered by Ollama. Llama, Qwen, Mistral, whatever you want to run. Your conversations never leave the laptop in front of you. Disconnect from the internet — it still works.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><img src="features/feature-imagery.png" alt=""/></div>
+      <h3>Real images, locally</h3>
+      <p>Photorealistic portraits and scenes in 3-4 seconds on Apple Silicon, faster on NVIDIA GPUs. SDXL-turbo baked in via diffusers. No "AI clipart" — actual diffusion.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><img src="features/feature-privacy.png" alt=""/></div>
+      <h3>Your data, your machine</h3>
+      <p>SQLite database. Standard character cards (SillyTavern V2). Export, back up, move between machines. No lock-in, no "your account has been suspended".</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><img src="features/feature-cozy.png" alt=""/></div>
+      <h3>Built to be lived in</h3>
+      <p>Companions keep a journal, remember shared moments, notice when you've been away. Not a chatbot. A relationship with continuity.</p>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="section-eyebrow">Why local</div>
+  <h2 class="section-title">Most AI companion apps rent you a person. OurNook gives you a place.</h2>
+  <p class="section-lede">The difference matters more than you'd think.</p>
+
+  <div class="compare">
+    <div class="compare-card theirs">
+      <h3>Cloud companions <span class="vs">— the usual</span></h3>
+      <ul class="compare-list">
+        <li>Subscription fee, monthly forever</li>
+        <li>Your conversations train someone else's model</li>
+        <li>Goes down when the company does</li>
+        <li>You don't own the memory — they do</li>
+        <li>"Realistic" images that look like AI clipart</li>
+        <li>Personality is whatever the prompt engineer wrote last week</li>
+      </ul>
+    </div>
+    <div class="compare-card ours">
+      <h3>OurNook <span class="vs">— the local way</span></h3>
+      <ul class="compare-list">
+        <li>Pay once, run forever</li>
+        <li>Your words never leave the laptop</li>
+        <li>Works offline, works forever</li>
+        <li>SQLite file you can back up, copy, move</li>
+        <li>Real diffusion — SDXL-turbo, photoreal output</li>
+        <li>Enneagram-based: personality is a system, not a vibe</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="quote-block">
+  <p class="quote">"It's not about making a better chatbot. It's about giving someone a place where the people in their head can actually be heard — without renting the room from a stranger."</p>
+  <p class="quote-author">— Anne Marie Lee, creator of OurNook</p>
+</div>
+
+<section id="download">
+  <div class="section-eyebrow">Get it</div>
+  <h2 class="section-title">Download OurNook v0.5.2</h2>
+  <p class="section-lede">Free to try. Bring your own Ollama install and a model that fits your machine.</p>
+
+  <div class="download">
+    <h2>Pick your platform</h2>
+    <p>Double-click to install. macOS users may need to allow the app in System Settings → Privacy & Security the first time.</p>
+    <div class="download-grid">
+      <div class="download-card">
+        <div class="label">macOS · Apple Silicon</div>
+        <h4>OurNook-0.5.2.dmg</h4>
+        <div class="size">M1, M2, M3, M4 · ~283 MB</div>
+        <a href="https://github.com/TheSolai/OurNook/releases/latest" class="btn btn-primary">↓ Download DMG</a>
+      </div>
+      <div class="download-card">
+        <div class="label">macOS · Intel</div>
+        <h4>OurNook-0.5.2.dmg</h4>
+        <div class="size">x86_64 · ~280 MB</div>
+        <a href="https://github.com/TheSolai/OurNook/releases/latest" class="btn btn-primary">↓ Download DMG</a>
+      </div>
+      <div class="download-card">
+        <div class="label">Windows · x64</div>
+        <h4>OurNook-0.5.2.zip</h4>
+        <div class="size">Windows 10/11 · ~205 MB</div>
+        <a href="https://github.com/TheSolai/OurNook/releases/latest" class="btn btn-primary">↓ Download ZIP</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="brand">
+      <div class="brand-mark">◉</div>
+      <span>OurNook · v0.5.2</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/TheSolai/OurNook">GitHub</a>
+      <a href="#">Docs</a>
+      <a href="#">Changelog</a>
+      <a href="#">License</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

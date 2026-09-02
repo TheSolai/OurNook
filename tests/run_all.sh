@@ -15,6 +15,9 @@ echo
 echo "── test_quality.py (regressions + edge cases) ──"
 $VENV tests/test_quality.py
 echo
+echo "── test_chat_lock.py (concurrent-send race regression) ──"
+$VENV tests/test_chat_lock.py
+echo
 echo "════════════════════════════════════════════════════════════"
 echo "  ✓ All test suites passed"
 echo "════════════════════════════════════════════════════════════"

@@ -2,12 +2,36 @@
 Ollama HTTP client — mirrors nook-core/src/ollama.rs
 """
 import httpx, json, base64, time
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, AsyncIterator
 from . import db
 
 OLLAMA_URL = "http://localhost:11434"
+
+# Per-companion chat lock. Prevents a race condition where rapid-fire sends
+# from the UI (or a script) cause Ollama responses to land out-of-order and
+# each one to be paired with the wrong user message. The UI's `sending` flag
+# already prevents this from the UI; this guards direct API access (scripts,
+# future mobile/CLI clients, the auto-consolidate hook, etc.).
+#
+# Keyed by companion_id so chats for different companions can still happen
+# in parallel. Inside the lock, we build the ollama history AFTER saving
+# the user message, so the model's context is always consistent.
+_CHAT_LOCKS: dict[str, threading.Lock] = {}
+_CHAT_LOCKS_META: dict[str, int] = {}  # cid -> last-used timestamp for GC
+_CHAT_LOCKS_LOCK = threading.Lock()
+
+
+def _get_chat_lock(companion_id: str) -> threading.Lock:
+    with _CHAT_LOCKS_LOCK:
+        lock = _CHAT_LOCKS.get(companion_id)
+        if lock is None:
+            lock = threading.Lock()
+            _CHAT_LOCKS[companion_id] = lock
+        _CHAT_LOCKS_META[companion_id] = time.time()
+        return lock
 
 
 # ── Model style guide ────────────────────────────────────────────
@@ -490,68 +514,78 @@ def send_message(companion_id: str, text: str) -> dict:
     if not text or not text.strip():
         raise ValueError("Cannot send an empty or whitespace-only message")
 
-    model_name = companion.get("model_name", "qwen3:14b")
-    system_prompt = build_system_prompt(companion_id)
+    # Per-companion serialization — see _CHAT_LOCKS comment. This makes
+    # rapid-fire sends queue up properly instead of producing the
+    # "responses matched to the wrong user message" bug.
+    lock = _get_chat_lock(companion_id)
+    with lock:
+        model_name = companion.get("model_name", "qwen3:14b")
+        system_prompt = build_system_prompt(companion_id)
 
-    # Save user message
-    user_msg = db.add_message(companion_id, "user", text)
+        # Save user message
+        user_msg = db.add_message(companion_id, "user", text)
 
-    # Build messages for Ollama
-    history = db.recent_messages(companion_id, limit=50)
-    ollama_messages = [{"role": "system", "content": system_prompt}]
-    for m in history:
-        ollama_messages.append({"role": m["role"], "content": m["content"]})
+        # Build messages for Ollama — done INSIDE the lock so the history
+        # we send to Ollama always includes the message we just saved and
+        # no other in-flight user's message sneaks in between.
+        history = db.recent_messages(companion_id, limit=50)
+        ollama_messages = [{"role": "system", "content": system_prompt}]
+        for m in history:
+            ollama_messages.append({"role": m["role"], "content": m["content"]})
 
-    start = time.time()
-    with httpx.stream("POST", f"{OLLAMA_URL}/api/chat",
-                      json={
-                          "model": model_name,
-                          "messages": ollama_messages,
-                          "stream": False,
-                          # Disable chain-of-thought for models that support it
-                          # (qwen3, qwen3.5, etc). Without this, the model's
-                          # internal reasoning leaks into the visible response
-                          # (e.g. "Okay, the user is asking X. I need to
-                          # respond with Y...") — that's broken UX.
-                          # Reasoning-only models like deepseek-r1 ignore this.
-                          "think": False,
-                      },
-                      timeout=60.0) as r:
-        r.raise_for_status()
-        data = r.read().decode()
-        result = json.loads(data)
+        start = time.time()
+        with httpx.stream("POST", f"{OLLAMA_URL}/api/chat",
+                          json={
+                              "model": model_name,
+                              "messages": ollama_messages,
+                              "stream": False,
+                              # Disable chain-of-thought for models that support it
+                              # (qwen3, qwen3.5, etc). Without this, the model's
+                              # internal reasoning leaks into the visible response
+                              # (e.g. "Okay, the user is asking X. I need to
+                              # respond with Y...") — that's broken UX.
+                              # Reasoning-only models like deepseek-r1 ignore this.
+                              "think": False,
+                          },
+                          timeout=60.0) as r:
+            r.raise_for_status()
+            data = r.read().decode()
+            result = json.loads(data)
 
-    duration_ms = int((time.time() - start) * 1000)
-    # Strip leaked <think>...</think> blocks (qwen3 / qwen3.5 / gpt-oss emit
-    # empty think tags even with 'think': false). Without this the user sees
-    # a literal "\n\n" prefix in the response.
-    response_text = _strip_think_blocks(result["message"]["content"])
+        duration_ms = int((time.time() - start) * 1000)
+        # Strip leaked <think>...</think> blocks (qwen3 / qwen3.5 / gpt-oss emit
+        # empty think tags even with 'think': false). Without this the user sees
+        # a literal "\n\n" prefix in the response.
+        response_text = _strip_think_blocks(result["message"]["content"])
 
-    # If the model produced nothing useful, raise a clear ValueError so the
-    # API returns 400 and the user sees a toast instead of a blank bubble.
-    if _is_blank_response(response_text):
-        raise ValueError(
-            "The model returned an empty response. This can happen when Ollama "
-            "is still loading the model or the request was interrupted. Please try again."
-        )
+        # If the model produced nothing useful, raise a clear ValueError so the
+        # API returns 400 and the user sees a toast instead of a blank bubble.
+        if _is_blank_response(response_text):
+            # Delete the user message we just saved so a retry doesn't end up
+            # with two of the same message in the history.
+            db.delete_message(user_msg["id"])
+            raise ValueError(
+                "The model returned an empty response. This can happen when Ollama "
+                "is still loading the model or the request was interrupted. Please try again."
+            )
 
-    # Save assistant message
-    assistant_msg = db.add_message(companion_id, "assistant", response_text)
+        # Save assistant message
+        assistant_msg = db.add_message(companion_id, "assistant", response_text)
 
-    # Bump the companion's "last seen" / streak / message count AFTER the
-    # call, so the next session's prompt reflects this conversation
-    # happened. We also implicitly mark all diary entries as read (via
-    # build_system_prompt earlier) so the next diary entries will be the
-    # new unread ones.
-    db.bump_last_seen(companion_id)
+        # Bump the companion's "last seen" / streak / message count AFTER the
+        # call, so the next session's prompt reflects this conversation
+        # happened. We also implicitly mark all diary entries as read (via
+        # build_system_prompt earlier) so the next diary entries will be the
+        # new unread ones.
+        db.bump_last_seen(companion_id)
 
-    return {
-        "user": user_msg,
-        "assistant": assistant_msg,
-        "model": model_name,
-        "total_duration_ns": duration_ms * 1_000_000,
-        "eval_count": result.get("eval_count"),
-    }
+        return {
+            "user": user_msg,
+            "assistant": assistant_msg,
+            "model": model_name,
+            "total_duration_ns": duration_ms * 1_000_000,
+            "eval_count": result.get("eval_count"),
+        }
 
 
 def avatar_interact(companion_id: str, interaction: str) -> dict:
