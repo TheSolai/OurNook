@@ -19,20 +19,20 @@ jobs:
             asset_name: OurNook-${{ github.ref_name }}-macOS-arm64
             spec: OurNook.spec
             torch_index: ""     # default macOS arm64 wheel — supports MPS
-            venv_activate: ".venv/bin/activate"
+            venv_python: ".venv/bin/python"
           - os: macos-13        # Intel Macs
             artifact_name: OurNook-macOS-x64
             asset_name: OurNook-${{ github.ref_name }}-macOS-x64
             spec: OurNook.spec
             env_arch: x86_64
             torch_index: ""     # default macOS x86_64 wheel
-            venv_activate: ".venv/bin/activate"
+            venv_python: ".venv/bin/python"
           - os: windows-latest
             artifact_name: OurNook-Windows-x64
             asset_name: OurNook-${{ github.ref_name }}-Windows-x64
             spec: OurNook-windows.spec
             torch_index: "--extra-index-url https://download.pytorch.org/whl/cpu"
-            venv_activate: ".venv/Scripts/activate"
+            venv_python: ".venv/Scripts/python.exe"
 
     steps:
       - name: Checkout
@@ -62,26 +62,26 @@ jobs:
         shell: bash
         run: |
           python -m venv .venv
-          source ${{ matrix.venv_activate }}
-          # Use `python -m pip` so we always invoke the venv's pip, not a
-          # system pip that might be on PATH first (Windows runner quirk).
-          python -m pip install -U pip wheel
-          python -m pip install pyinstaller
+          # Use the venv python directly via `python -m` so we never depend
+          # on the activate script (which has historically broken on the
+          # bash-on-Windows runner — perm denied / Scriptsactivate mangling).
+          PIP="${{ matrix.venv_python }} -m pip"
+          ${{ matrix.venv_python }} -m pip install -U pip wheel
+          ${{ matrix.venv_python }} -m pip install pyinstaller
           # CPU-only torch on Windows (smaller, runner has no GPU anyway).
           # Mac gets the default wheel so MPS works at runtime.
-          python -m pip install ${{ matrix.torch_index }} torch
-          python -m pip install -r requirements.txt || true
+          ${{ matrix.venv_python }} -m pip install ${{ matrix.torch_index }} torch
+          ${{ matrix.venv_python }} -m pip install -r requirements.txt || true
           # Fallback: install the specific deps we know we need, including
           # the diffusers/transformers/safetensors stack for v0.15.2 real
           # diffusion image gen.
-          python -m pip install fastapi 'uvicorn[standard]' httpx pydantic aiosqlite pywebview
-          python -m pip install diffusers transformers accelerate safetensors Pillow
+          ${{ matrix.venv_python }} -m pip install fastapi 'uvicorn[standard]' httpx pydantic aiosqlite pywebview
+          ${{ matrix.venv_python }} -m pip install diffusers transformers accelerate safetensors Pillow
 
       - name: Build with PyInstaller
         shell: bash
         run: |
-          ${{ matrix.venv_activate }}
-          pyinstaller ${{ matrix.spec }} --noconfirm --clean
+          ${{ matrix.venv_python }} -m PyInstaller ${{ matrix.spec }} --noconfirm --clean
 
       - name: Package macOS .dmg
         if: matrix.os == 'macos-14' || matrix.os == 'macos-13'
