@@ -62,18 +62,20 @@ jobs:
         shell: bash
         run: |
           python -m venv .venv
-          ${{ matrix.venv_activate }}
-          pip install -U pip wheel
-          pip install pyinstaller
+          source ${{ matrix.venv_activate }}
+          # Use `python -m pip` so we always invoke the venv's pip, not a
+          # system pip that might be on PATH first (Windows runner quirk).
+          python -m pip install -U pip wheel
+          python -m pip install pyinstaller
           # CPU-only torch on Windows (smaller, runner has no GPU anyway).
           # Mac gets the default wheel so MPS works at runtime.
-          pip install ${{ matrix.torch_index }} torch
-          pip install -r requirements.txt || true
+          python -m pip install ${{ matrix.torch_index }} torch
+          python -m pip install -r requirements.txt || true
           # Fallback: install the specific deps we know we need, including
           # the diffusers/transformers/safetensors stack for v0.15.2 real
           # diffusion image gen.
-          pip install fastapi 'uvicorn[standard]' httpx pydantic aiosqlite pywebview
-          pip install diffusers transformers accelerate safetensors Pillow
+          python -m pip install fastapi 'uvicorn[standard]' httpx pydantic aiosqlite pywebview
+          python -m pip install diffusers transformers accelerate safetensors Pillow
 
       - name: Build with PyInstaller
         shell: bash
