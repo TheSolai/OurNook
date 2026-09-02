@@ -18,15 +18,21 @@ jobs:
             artifact_name: OurNook-macOS-arm64
             asset_name: OurNook-${{ github.ref_name }}-macOS-arm64
             spec: OurNook.spec
+            torch_index: ""     # default macOS arm64 wheel — supports MPS
+            venv_activate: "source .venv/bin/activate"
           - os: macos-13        # Intel Macs
             artifact_name: OurNook-macOS-x64
             asset_name: OurNook-${{ github.ref_name }}-macOS-x64
             spec: OurNook.spec
             env_arch: x86_64
+            torch_index: ""     # default macOS x86_64 wheel
+            venv_activate: "source .venv/bin/activate"
           - os: windows-latest
             artifact_name: OurNook-Windows-x64
             asset_name: OurNook-${{ github.ref_name }}-Windows-x64
             spec: OurNook-windows.spec
+            torch_index: "--extra-index-url https://download.pytorch.org/whl/cpu"
+            venv_activate: ".venv\\Scripts\\activate"
 
     steps:
       - name: Checkout
@@ -56,16 +62,12 @@ jobs:
         shell: bash
         run: |
           python -m venv .venv
-          source .venv/bin/activate || .venv\Scripts\activate
+          ${{ matrix.venv_activate }}
           pip install -U pip wheel
           pip install pyinstaller
-          # On Windows we install CPU-only torch — it's ~10x smaller and the
-          # GitHub runner has no GPU anyway. The bundled app picks up CUDA
-          # at runtime if the user has an NVIDIA GPU.
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            pip install --extra-index-url https://download.pytorch.org/whl/cpu torch
-            echo "Installed CPU-only torch (CUDA picked up at runtime if present)"
-          fi
+          # CPU-only torch on Windows (smaller, runner has no GPU anyway).
+          # Mac gets the default wheel so MPS works at runtime.
+          pip install ${{ matrix.torch_index }} torch
           pip install -r requirements.txt || true
           # Fallback: install the specific deps we know we need, including
           # the diffusers/transformers/safetensors stack for v0.15.2 real
@@ -74,10 +76,10 @@ jobs:
           pip install diffusers transformers accelerate safetensors Pillow
 
       - name: Build with PyInstaller
-        run: |
-          source .venv/bin/activate || .venv\Scripts\activate
-          pyinstaller ${{ matrix.spec }} --noconfirm --clean
         shell: bash
+        run: |
+          ${{ matrix.venv_activate }}
+          pyinstaller ${{ matrix.spec }} --noconfirm --clean
 
       - name: Package macOS .dmg
         if: matrix.os == 'macos-14' || matrix.os == 'macos-13'
@@ -97,9 +99,10 @@ jobs:
 
       - name: Package Windows .zip
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           # Use 7-zip to make a smaller archive
-          7z a -tzip -mx=9 dist\${{ matrix.asset_name }}.zip dist\OurNook
+          7z a -tzip -mx=9 "dist/${{ matrix.asset_name }}.zip" dist/OurNook
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
