@@ -32,7 +32,7 @@ export function EditCompanionPanel({ companionId, onClose }: { companionId: stri
   const { ollamaModels } = useStatusStore();
   const showToast = useUIStore((s) => s.showToast);
 
-  const [tab, setTab] = useState<"basic" | "soul" | "enneagram">("basic");
+  const [tab, setTab] = useState<"basic" | "model" | "soul" | "enneagram">("basic");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [soulSaving, setSoulSaving] = useState(false);
@@ -250,6 +250,9 @@ export function EditCompanionPanel({ companionId, onClose }: { companionId: stri
           <button className={`subtab ${tab === "basic" ? "active" : ""}`} onClick={() => setTab("basic")}>
             Basic
           </button>
+          <button className={`subtab ${tab === "model" ? "active" : ""}`} onClick={() => setTab("model")}>
+            Model {data.model_name && <span className="dim" style={{ marginLeft: 4 }}>· {data.model_name}</span>}
+          </button>
           <button className={`subtab ${tab === "enneagram" ? "active" : ""}`} onClick={() => setTab("enneagram")}>
             Enneagram
             {data.enneagram_type && <span className="dim" style={{ marginLeft: 4 }}>· {data.enneagram_type}{data.enneagram_wing ? `w${data.enneagram_wing}` : ""}</span>}
@@ -311,29 +314,6 @@ export function EditCompanionPanel({ companionId, onClose }: { companionId: stri
                 </label>
               </div>
 
-              <label>
-                <span>Model <span className="dim">— which LLM they use for chat</span></span>
-                {ollamaModels.length > 0 ? (
-                  <select
-                    value={data.model_name}
-                    onChange={(e) => setField("model_name", e.target.value)}
-                  >
-                    {!ollamaModels.find((m) => m.name === data.model_name) && (
-                      <option value={data.model_name}>{data.model_name} (not installed)</option>
-                    )}
-                    {ollamaModels.map((m) => (
-                      <option key={m.name} value={m.name}>{m.name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    value={data.model_name}
-                    onChange={(e) => setField("model_name", e.target.value)}
-                    placeholder="qwen3:14b"
-                  />
-                )}
-              </label>
-
               <div className="settings-section-title" style={{ marginTop: 16 }}>Voice <span className="dim" style={{ fontSize: 11, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>— TTS settings, JSON stored</span></div>
               <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
                 <label style={{ flex: 1 }}>
@@ -366,6 +346,62 @@ export function EditCompanionPanel({ companionId, onClose }: { companionId: stri
                     onChange={(e) => setVoiceField("pitch", parseFloat(e.target.value) || 0)}
                   />
                 </label>
+              </div>
+            </div>
+          ) : tab === "model" ? (
+            <div className="col" style={{ padding: 24, gap: 20 }}>
+              <div>
+                <div className="settings-section-title">Language model</div>
+                <p className="dim" style={{ marginTop: 6, fontSize: 13, lineHeight: 1.5 }}>
+                  The Ollama model this companion chats with. Different models give different vibes — try a big one for nuance, a small one for speed. The model needs to be installed locally; you can pull new ones from the Models page.
+                </p>
+              </div>
+
+              {ollamaModels.length > 0 ? (
+                <label>
+                  <span>Model</span>
+                  <select
+                    value={data.model_name}
+                    onChange={(e) => setField("model_name", e.target.value)}
+                    style={{ fontSize: 15, padding: "10px 12px" }}
+                  >
+                    {!ollamaModels.find((m) => m.name === data.model_name) && (
+                      <option value={data.model_name}>{data.model_name} (not installed)</option>
+                    )}
+                    {ollamaModels.map((m) => (
+                      <option key={m.name} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <label>
+                  <span>Model</span>
+                  <input
+                    value={data.model_name}
+                    onChange={(e) => setField("model_name", e.target.value)}
+                    placeholder="qwen3:14b"
+                  />
+                </label>
+              )}
+
+              {data.model_name && ollamaModels.length > 0 && (() => {
+                const m = ollamaModels.find((x) => x.name === data.model_name);
+                if (!m) return null;
+                const sizeGB = m.size ? (m.size / 1024 / 1024 / 1024).toFixed(1) : "?";
+                return (
+                  <div className="dim" style={{ fontSize: 12, lineHeight: 1.7, padding: "12px 14px", background: "var(--bg-2)", borderRadius: 8, border: "1px solid var(--border-2)" }}>
+                    <div><strong style={{ color: "var(--ink)" }}>Size:</strong> {sizeGB} GB on disk</div>
+                    {m.parameter_size && <div><strong style={{ color: "var(--ink)" }}>Parameters:</strong> {m.parameter_size}</div>}
+                    {m.quantization_level && <div><strong style={{ color: "var(--ink)" }}>Quantization:</strong> {m.quantization_level}</div>}
+                    {m.family && <div><strong style={{ color: "var(--ink)" }}>Family:</strong> {m.family}</div>}
+                  </div>
+                );
+              })()}
+
+              <div style={{ padding: "12px 14px", background: "var(--bg-2)", borderRadius: 8, border: "1px solid var(--border-2)" }}>
+                <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.6 }}>
+                  <strong style={{ color: "var(--ink)" }}>Tip:</strong> changes take effect on the next message. Each companion remembers its own model — they don't share.
+                </div>
               </div>
             </div>
           ) : tab === "enneagram" ? (

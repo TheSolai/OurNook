@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCompanionStore, useMemoryStore } from "./stores";
 
-const MOODS = ["😊", "😐", "😔", "😡", "🤔", "🥰", "😴", "🎉"];
-
 // v0.15 — Canonical memory categories. The backend's
 // api/memory_categories.py owns the source of truth; we mirror it here.
 // Order matches the canonical list (used for the filter chips + dropdown).
@@ -43,7 +41,7 @@ export function MemoryPanel() {
   const { activeId, roster } = useCompanionStore();
   const mem = useMemoryStore();
 
-  const [tab, setTab] = useState<"facts" | "summaries" | "diary">("facts");
+  const [tab, setTab] = useState<"facts" | "summaries">("facts");
   const [newFact, setNewFact] = useState("");
   const [newCategory, setNewCategory] = useState("identity");
   const [categoryTouched, setCategoryTouched] = useState(false);
@@ -58,8 +56,6 @@ export function MemoryPanel() {
   const [extractMsg, setExtractMsg] = useState<string | null>(null);
   const [newSummary, setNewSummary] = useState("");
   const [newTone, setNewTone] = useState("");
-  const [newDiary, setNewDiary] = useState("");
-  const [newMood, setNewMood] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeId) {
@@ -82,7 +78,6 @@ export function MemoryPanel() {
 
   const facts = mem.semantic[activeId] ?? [];
   const sums = mem.summaries[activeId] ?? [];
-  const diaryEntries = mem.diary[activeId] ?? [];
   const active = roster.find((c) => c.id === activeId);
 
   return (
@@ -98,9 +93,6 @@ export function MemoryPanel() {
         </button>
         <button className={`subtab ${tab === "summaries" ? "active" : ""}`} onClick={() => setTab("summaries")}>
           📝 Sessions <span className="dim" style={{ marginLeft: 4 }}>· {sums.length}</span>
-        </button>
-        <button className={`subtab ${tab === "diary" ? "active" : ""}`} onClick={() => setTab("diary")}>
-          📖 Diary <span className="dim" style={{ marginLeft: 4 }}>· {diaryEntries.length}</span>
         </button>
       </div>
 
@@ -348,66 +340,8 @@ export function MemoryPanel() {
         </div>
       )}
 
-      {/* DIARY */}
-      {tab === "diary" && (
-        <div className="col-lg">
-          <form
-            className="add-form"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!newDiary.trim()) return;
-              await mem.addDiary(activeId, newDiary, newMood ?? undefined);
-              setNewDiary("");
-              setNewMood(null);
-            }}
-          >
-            <textarea
-              placeholder="Write a diary entry — for you and your companion to read…"
-              value={newDiary}
-              onChange={(e) => setNewDiary(e.target.value)}
-              rows={4}
-            />
-            <div className="add-form-row" style={{ flexWrap: "wrap" }}>
-              <span className="caption">Mood:</span>
-              {MOODS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setNewMood(newMood === m ? null : m)}
-                  className="mood-btn"
-                  style={newMood === m ? { background: "var(--accent-soft)", borderColor: "var(--accent)" } : {}}
-                >
-                  {m}
-                </button>
-              ))}
-              <span className="spacer" />
-              <button type="submit" className="primary" disabled={!newDiary.trim()}>+ Save entry</button>
-            </div>
-          </form>
-
-          {diaryEntries.length === 0 ? (
-            <div className="empty-state" style={{ padding: "60px 0", minHeight: 200 }}>
-              <div className="empty-state-mark" style={{ width: 56, height: 56, fontSize: 22 }}>📖</div>
-              <h2>Your diary is empty</h2>
-              <p>Write something for {active?.name} to read and remember.</p>
-            </div>
-          ) : (
-            <ul className="memory-list">
-              {diaryEntries.map((d) => (
-                <li key={d.id} className="memory-item">
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    {d.mood_tag && <span style={{ fontSize: 22 }}>{d.mood_tag}</span>}
-                    <span className="caption" style={{ marginLeft: 8 }}>{new Date(d.created_at).toLocaleString()}</span>
-                    <span className="spacer" />
-                    <button className="danger" onClick={() => mem.deleteDiary(d.id)}>delete</button>
-                  </div>
-                  <div className="memory-text">{d.content}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {/* DIARY — moved to a dedicated DiaryPanel (top-level page). */}
     </div>
   );
 }
+

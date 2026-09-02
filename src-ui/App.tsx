@@ -23,6 +23,7 @@ import { CompanionWizard } from "./CompanionWizard";
 import { BackupPanel } from "./BackupPanel";
 import { EditCompanionPanel } from "./EditCompanionPanel";
 import { InnerLifePanel } from "./InnerLifePanel";
+import { DiaryPanel } from "./DiaryPanel";
 
 function StatusBar() {
   const { ollama, appInfo } = useStatusStore();
@@ -74,6 +75,7 @@ function Tabs() {
   const tabs = [
     { id: "chat", label: t("nav.chat") },
     { id: "memory", label: t("nav.memory") },
+    { id: "diary", label: t("nav.diary") || "Diary" },
     { id: "inner", label: t("nav.inner") || "Inner life" },
     { id: "art", label: t("nav.art") },
     { id: "models", label: t("nav.models") },
@@ -195,6 +197,7 @@ export default function App() {
         <Tabs />
         {activeTab === "chat" && <ChatPanel />}
         {activeTab === "memory" && <MemoryPanel />}
+        {activeTab === "diary" && <DiaryPanel />}
         {activeTab === "inner" && <InnerLifePanel />}
         {activeTab === "art" && <ArtPanel />}
         {activeTab === "models" && <ModelsPanel />}

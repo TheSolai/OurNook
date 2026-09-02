@@ -616,7 +616,7 @@ export const useStatusStore = create<StatusState>((set) => ({
 // ── UI store ─────────────────────────────────────────────────────
 
 interface UIState {
-  activeTab: "chat" | "memory" | "art" | "settings" | "models" | "cards" | "inner";
+  activeTab: "chat" | "memory" | "art" | "settings" | "models" | "cards" | "inner" | "diary";
   setTab: (t: UIState["activeTab"]) => void;
   showWizard: boolean; openWizard: () => void; closeWizard: () => void;
   showBackup: boolean; openBackup: () => void; closeBackup: () => void;
@@ -629,7 +629,7 @@ export const useUIStore = create<UIState>((set) => ({
   // Read the persisted tab on init; fall back to "chat". Validate against
   // known tab ids so a stale "foo" doesn't crash the tabs.
   activeTab: (() => {
-    const valid = ["chat", "memory", "art", "settings", "models", "cards", "inner"] as const;
+    const valid = ["chat", "memory", "art", "settings", "models", "cards", "inner", "diary"] as const;
     const saved = lsGet("activeTab");
     return saved && (valid as readonly string[]).includes(saved) ? (saved as UIState["activeTab"]) : "chat";
   })(),
