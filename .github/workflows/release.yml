@@ -32,7 +32,7 @@ jobs:
             asset_name: OurNook-${{ github.ref_name }}-Windows-x64
             spec: OurNook-windows.spec
             torch_index: "--extra-index-url https://download.pytorch.org/whl/cpu"
-            venv_activate: ".venv\\Scripts\\activate"
+            venv_activate: "source .venv/Scripts/activate"
 
     steps:
       - name: Checkout
