@@ -19,7 +19,6 @@ aiosqlite>=0.20,<1.0
 
 # WebView wrapper (the app window)
 pywebview>=5.0,<7.0
-pywebview-platform>=5.0  # auto-installed by pywebview; pin for safety
 
 # --- Real diffusion image gen (v0.15.2) -------------------------------------
 # These power `_try_diffusers_image()` in api/ollama.py — the local SDXL-turbo
