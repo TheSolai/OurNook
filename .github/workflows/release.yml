@@ -19,20 +19,20 @@ jobs:
             asset_name: OurNook-${{ github.ref_name }}-macOS-arm64
             spec: OurNook.spec
             torch_index: ""     # default macOS arm64 wheel — supports MPS
-            venv_activate: "source .venv/bin/activate"
+            venv_activate: ".venv/bin/activate"
           - os: macos-13        # Intel Macs
             artifact_name: OurNook-macOS-x64
             asset_name: OurNook-${{ github.ref_name }}-macOS-x64
             spec: OurNook.spec
             env_arch: x86_64
             torch_index: ""     # default macOS x86_64 wheel
-            venv_activate: "source .venv/bin/activate"
+            venv_activate: ".venv/bin/activate"
           - os: windows-latest
             artifact_name: OurNook-Windows-x64
             asset_name: OurNook-${{ github.ref_name }}-Windows-x64
             spec: OurNook-windows.spec
             torch_index: "--extra-index-url https://download.pytorch.org/whl/cpu"
-            venv_activate: "source .venv/Scripts/activate"
+            venv_activate: ".venv/Scripts/activate"
 
     steps:
       - name: Checkout
