@@ -53,6 +53,7 @@ jobs:
         run: pnpm install --frozen-lockfile && pnpm build
 
       - name: Install Python deps
+        shell: bash
         run: |
           python -m venv .venv
           source .venv/bin/activate || .venv\Scripts\activate
