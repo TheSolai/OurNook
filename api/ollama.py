@@ -560,10 +560,12 @@ def send_message(companion_id: str, text: str) -> dict:
 
         # If the model produced nothing useful, raise a clear ValueError so the
         # API returns 400 and the user sees a toast instead of a blank bubble.
+        # We KEEP the user message — deleting it on a blank response was a
+        # data-loss bug: a retry (or even a single send under a flaky model)
+        # could silently drop messages from chat history. The next successful
+        # send will naturally appear in order after the preserved one, so
+        # duplicates aren't a concern.
         if _is_blank_response(response_text):
-            # Delete the user message we just saved so a retry doesn't end up
-            # with two of the same message in the history.
-            db.delete_message(user_msg["id"])
             raise ValueError(
                 "The model returned an empty response. This can happen when Ollama "
                 "is still loading the model or the request was interrupted. Please try again."

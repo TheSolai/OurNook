@@ -523,7 +523,7 @@ def app_info():
     import platform, datetime
     return {
         "name": "OurNook",
-        "version": "0.3.0",
+        "version": "0.5.2",
         "platform": platform.system(),
         "data_dir": str(db.DATA_DIR),
         "started_at": datetime.datetime.now().isoformat(),

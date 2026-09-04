@@ -281,18 +281,12 @@ def _import_card():
 
 
 def _export_active():
-    cid = _js_eval("useCompanionStore.getState().activeId")
-    if not cid:
-        return
-    name = _js_eval(f"useCompanionStore.getState().roster.find(c => c.id === '{cid}')?.name || 'companion'")
-    safe = _js_eval(f"(({name!r}).replace(/[^A-Za-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'companion')")
-    fmt = _js_eval("window.__cardioExportFormat || 'json'")
-    url = f"http://127.0.0.1:{API_PORT}/companions/{cid}/export?format={fmt}"
-    try:
-        import webview as _w
-        _w.create_window(f"Export {name}", url, hidden=True, width=400, height=200)
-    except Exception:
-        _js_eval(f"window.open({url!r}, '_blank')")
+    # Trigger the export via the frontend — it fetches the URL (which returns a
+    # Content-Disposition: attachment response) and saves it to disk through
+    # the browser's download flow. Previously this opened a hidden pywebview
+    # window just to receive the download, which was a heavy hack for what is
+    # a one-line JS fetch.
+    _js_eval("window.__ournookTriggerExport && window.__ournookTriggerExport()")
 
 
 def _reload():

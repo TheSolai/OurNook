@@ -122,8 +122,8 @@ EXE = EXE(
     upx=True,
     console=False,
     disable_windowed_traceback=False,
-    # Icon — the .ico from the Tauri build
-    icon=str(ROOT / "nook-tauri" / "icons" / "icon.ico") if (ROOT / "nook-tauri" / "icons" / "icon.ico").exists() else None,
+    # Icon — the .ico at the project root
+    icon=str(ROOT / "icons" / "icon.ico") if (ROOT / "icons" / "icon.ico").exists() else None,
 )
 
 coll = COLLECT(

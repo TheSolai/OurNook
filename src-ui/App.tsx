@@ -4,6 +4,7 @@ declare global {
   interface Window {
     __cardioExportFormat?: "json" | "png";
     __cardioWantImport?: boolean;
+    __ournookTriggerExport?: () => void;
   }
 }
 import { useTranslation } from "react-i18next";
@@ -117,6 +118,29 @@ export default function App() {
     void fetchRoster();
   }, [refreshAll, fetchRoster]);
 
+  // Expose a single export trigger for the native menu (File → Export Active Card…)
+  // and the Cmd/Ctrl-Shift-E shortcut. Replaces the old flow that opened a
+  // hidden pywebview window just to receive the file download.
+  useEffect(() => {
+    window.__ournookTriggerExport = () => {
+      const id = useCompanionStore.getState().activeId;
+      if (!id) return;
+      const c = useCompanionStore.getState().roster.find((x) => x.id === id);
+      if (!c) return;
+      const fmt = window.__cardioExportFormat || "json";
+      const url = `/api/companions/${id}/export?format=${fmt}`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${c.name.replace(/[^A-Za-z0-9_-]+/g, "_") || "companion"}.${fmt}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+    return () => {
+      delete window.__ournookTriggerExport;
+    };
+  }, []);
+
   // Global keyboard shortcuts (Cmd/Ctrl-N, Cmd/Ctrl-E, Cmd/Ctrl-1..6)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -137,17 +161,7 @@ export default function App() {
       }
       if (k === "e" && e.shiftKey) {
         e.preventDefault();
-        const id = useCompanionStore.getState().activeId;
-        if (id) {
-          const c = useCompanionStore.getState().roster.find((x) => x.id === id);
-          if (c) {
-            const url = `/api/companions/${id}/export?format=${window.__cardioExportFormat || "json"}`;
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${c.name.replace(/[^A-Za-z0-9_-]+/g, "_") || "companion"}.${window.__cardioExportFormat || "json"}`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          }
-        }
+        window.__ournookTriggerExport?.();
         return;
       }
       if (k === "b" && !e.shiftKey) {

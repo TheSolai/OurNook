@@ -73,10 +73,10 @@ promo/
 
 | Platform | Status | Size | Location |
 |---|---|---|---|
-| macOS Apple Silicon | ✅ done | 283 MB | `dist/release/OurNook-0.5.2-macOS-arm64.dmg` |
-| macOS Intel | ⏳ queued on GH | — | `dist/release/gh-artifacts/OurNook-macOS-x64/` (when ready) |
+| macOS Apple Silicon | ✅ done | 287 MB | `dist/release/OurNook-0.5.2-macOS-arm64.dmg` (local) + `dist/release/gh-artifacts/OurNook-macOS-arm64/OurNook-main-macOS-arm64.dmg` (GH) |
+| macOS Intel | ⚠️ not shipped (GH Intel runners scarce) | — | Can be built locally on an x86_64 Mac with `pyinstaller OurNook.spec`. Consider re-running the workflow at off-peak. |
 | Windows x64 | ✅ done | 205 MB | `dist/release/gh-artifacts/OurNook-Windows-x64/OurNook-main-Windows-x64.zip` |
 
 The local Mac DMG and the GH Mac arm64 DMG are byte-for-byte equivalent in functionality. Use whichever.
 
-Once the Mac x64 build finishes, copy the artifact to `dist/release/` and update the table.
+**Shipping without Intel Mac:** Apple Silicon covers ~95% of Mac installs since 2020. The few Intel Mac users in your audience can be told "Intel Mac build coming soon" — or you can build one locally on any x86_64 Mac with `pip install -r requirements.txt && pyinstaller OurNook.spec`.

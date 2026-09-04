@@ -161,8 +161,8 @@ EXE = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # Icon — the .icns file from the Tauri build (we already have it)
-    icon=str(ROOT / "nook-tauri" / "icons" / "icon.icns") if IS_MACOS and (ROOT / "nook-tauri" / "icons" / "icon.icns").exists() else None,
+    # Icon — the .icns at the project root
+    icon=str(ROOT / "icons" / "icon.icns") if IS_MACOS and (ROOT / "icons" / "icon.icns").exists() else None,
 )
 
 
@@ -184,7 +184,7 @@ if IS_MACOS:
     app = BUNDLE(
         coll,
         name="OurNook.app",
-        icon=str(ROOT / "nook-tauri" / "icons" / "icon.icns") if (ROOT / "nook-tauri" / "icons" / "icon.icns").exists() else None,
+        icon=str(ROOT / "icons" / "icon.icns") if (ROOT / "icons" / "icon.icns").exists() else None,
         bundle_identifier="ai.ournook.desktop",
         info_plist={
             "CFBundleName": "OurNook",
