@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OurNook — Your AI Companion, Running Locally on Your Mac</title>
+  <meta name="description" content="A private, beautiful AI companion that lives in a floating window on your Mac. Voice conversations, long-term memory, and full control — no cloud required.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e8e8f0;
+      --text-muted: #8888a0;
+      --accent: #8b5cf6;
+      --accent-light: #a78bfa;
+      --accent-glow: rgba(139, 92, 246, 0.25);
+      --green: #34d399;
+      --green-dim: rgba(52, 211, 153, 0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: #fff !important;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.2s, box-shadow 0.2s !important;
+    }
+    .nav-cta:hover {
+      background: var(--accent-light) !important;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .hero-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.1;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 540px;
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 48px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+      box-shadow: 0 0 30px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 15px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: var(--text-muted);
+    }
+    .hero-macos {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .hero-macos strong { color: var(--text); }
+
+    /* ── App Preview ── */
+    .app-preview {
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto 100px;
+      position: relative;
+    }
+    .app-preview img {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px var(--accent-glow);
+    }
+
+    /* ── Section styles ── */
+    section { padding: 100px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      max-width: 600px;
+    }
+    .section-sub {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 60px;
+    }
+
+    /* ── Features grid ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px rgba(139,92,246,0.1);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: var(--green-dim);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── How it works ── */
+    .how-it-works {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
+    }
+    .step {
+      text-align: center;
+    }
+    .step-number {
+      width: 52px; height: 52px;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin: 0 auto 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .step h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+    .step p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── Privacy ── */
+    .privacy {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 60px;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .privacy { grid-template-columns: 1fr; padding: 36px; }
+    }
+    .privacy ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .privacy li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+    .privacy li .check {
+      color: var(--green);
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .privacy-code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text-muted);
+    }
+    .privacy-code .kw { color: var(--accent-light); }
+    .privacy-code .str { color: var(--green); }
+    .privacy-code .cm { color: #555; font-style: italic; }
+
+    /* ── Pricing ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      position: relative;
+    }
+    .price-card.featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+    .price-card .badge {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 100px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .price-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .price-card .price {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+    .price-card .price .period {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+    .price-card .desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .price-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .price-card ul li {
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .price-card ul li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 700;
+    }
+    .price-card .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .price-card .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .price-card .btn-primary:hover {
+      background: var(--accent-light);
+    }
+    .price-card .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .price-card .btn-secondary:hover {
+      border-color: var(--text-muted);
+    }
+
+    /* ── FAQ ── */
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+      cursor: pointer;
+    }
+    .faq-item:first-child { padding-top: 0; }
+    .faq-q {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .faq-q::after {
+      content: '+';
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+    .faq-item.open .faq-q::after { transform: rotate(45deg); }
+    .faq-a {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      display: none;
+    }
+    .faq-item.open .faq-a { display: block; }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      text-align: center;
+      padding: 120px 24px;
+      position: relative;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 500px; height: 400px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-size: clamp(30px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+    }
+    .cta-section p {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      max-width: 460px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Mac mockup ── */
+    .mac-mockup {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 0 auto;
+      max-width: 820px;
+    }
+    .mac-bar {
+      height: 36px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+    }
+    .mac-bar .dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+    .mac-bar .dot.red { background: #ff5f57; }
+    .mac-bar .dot.yellow { background: #febc2e; }
+    .mac-bar .dot.green { background: #28c840; }
+    .mac-bar .title {
+      flex: 1;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .mac-content {
+      min-height: 420px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+    .mac-sidebar {
+      width: 220px;
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      flex-shrink: 0;
+    }
+    .mac-sidebar-item {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .mac-sidebar-item.active {
+      background: var(--accent-glow);
+      color: var(--accent-light);
+      border: 1px solid rgba(139,92,246,0.3);
+    }
+    .mac-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .mac-chat {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-msg {
+      max-width: 75%;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .chat-msg.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 16px 16px 4px 16px;
+    }
+    .chat-msg.ai {
+      align-self: flex-start;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 16px 16px 16px 4px;
+      color: var(--text-muted);
+    }
+    .mac-input {
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .mac-input input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+    .mac-input input:focus { border-color: var(--accent); }
+    .mac-input .send-btn {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .mac-sidebar { display: none; }
+      .mac-mockup { border-radius: 0; border-left: none; border-right: none; }
+      nav { padding: 14px 20px; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      section { padding: 60px 20px; }
+      .privacy { padding: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="nav-logo">Our<span>Nook</span></div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://gumroad.com/l/ournook" class="nav-cta">Get OurNook</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Running on your Mac &bull; macOS 13+</span>
+  </div>
+  <h1>The AI companion that<br><span class="gradient">never leaves your desk</span></h1>
+  <p>OurNook is a private, beautiful floating window on your Mac — voice conversations, real memory, and full control. Powered by Ollama. No cloud. No compromise.</p>
+  <div class="hero-actions">
+    <a href="https://gumroad.com/l/ournook" class="btn-primary">Download for Mac</a>
+    <a href="#features" class="btn-secondary">See how it works</a>
+  </div>
+  <p class="hero-macos"><strong>macOS 13 Ventura</strong> or later &bull; Apple Silicon & Intel &bull; Free to start</p>
+</div>
+
+<!-- ── App Preview ── -->
+<div class="app-preview" style="padding: 0 24px 0; max-width: 860px; margin: 0 auto 100px;">
+  <div class="mac-mockup">
+    <div class="mac-bar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="title">OurNook</div>
+    </div>
+    <div class="mac-content" style="flex-direction: row;">
+      <div class="mac-sidebar">
+        <div class="mac-sidebar-item active">💬 Conversation</div>
+        <div class="mac-sidebar-item">🧠 Memory</div>
+        <div class="mac-sidebar-item">🎙️ Voice</div>
+        <div class="mac-sidebar-item">⚙️ Settings</div>
+      </div>
+      <div class="mac-main">
+        <div class="mac-chat">
+          <div class="chat-msg ai">Hey! How's your morning going? I remember you mentioned you were working on the blog redesign.</div>
+          <div class="chat-msg user">Pretty good — finished the new post. Can you help me brainstorm ideas for next week?</div>
+          <div class="chat-msg ai">Absolutely. Based on your recent posts about AI tooling, how about something on local-first AI workflows? I could pull in some of the research you've saved. Want to hear what I've got?</div>
+          <div class="chat-msg user">Yes please!</div>
+          <div class="chat-msg ai">Three angles that fit your voice: 1) "Why I stopped using cloud AI and what I use instead" — personal story, practical. 2) A comparison of Ollama setups across different hardware. 3) A guide to building a local-first writing workflow. Which speaks to you?</div>
+        </div>
+        <div class="mac-input">
+          <input type="text" placeholder="Ask anything..." value="What are my best post topics from this month?">
+          <div class="send-btn">↑</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Features ── -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything you need. Nothing you don't.</h2>
+    <p class="section-sub">OurNook is designed to be the companion you actually want sitting next to you — not another browser tab you'll forget.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎙️</div>
+        <h3>Voice conversations</h3>
+        <p>Talk to your companion naturally. Whisper handles accurate transcription, Kokoro gives it a warm, human-sounding voice. No typing required.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Real memory</h3>
+        <p>OurNook remembers your projects, preferences, and conversations. It builds context over time so you never have to re-explain yourself.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>100% private</h3>
+        <p>Every conversation stays on your machine. No data ever leaves your Mac. Powered by Ollama — you own the model, you own the data.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>Rich text output</h3>
+        <p>Code blocks with syntax highlighting, formatted markdown, copyable snippets. Your companion's responses are ready to use, not just read.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant responses</h3>
+        <p>Runs locally on Ollama — no API latency, no rate limits, no subscription fees per message. Your Mac's power, your companion's brain.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪟</div>
+        <h3>Floating window</h3>
+        <p>A compact, always-accessible window that floats above your other apps. Overlay mode keeps it in view while you work.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>Any Ollama model</h3>
+        <p>Use qwen3, llama3.3, deepseek-r1, or any model you have running locally. Switch models in seconds depending on the task.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌙</div>
+        <h3>Dark mode native</h3>
+        <p>Designed dark from the ground up. Follows your system theme automatically, looks right at home on your Mac.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── How it works ── -->
+<section class="how-it-works">
+  <div class="container">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Up and running in five minutes</h2>
+    <p class="section-sub">No complex setup. No account. No cloud. Just Ollama, OurNook, and your Mac.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Install Ollama</h3>
+        <p>Download Ollama from ollama.com and pull your first model. OurNook auto-detects it — no configuration needed.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Download OurNook</h3>
+        <p>Get the app from Gumroad. Drag it to your Applications folder. Open it like any Mac app.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Start talking</h3>
+        <p>OurNook connects to your local Ollama instantly. Pick a voice, set your model, and your companion is ready.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Privacy ── -->
+<section id="privacy">
+  <div class="container">
+    <div class="section-label">Privacy</div>
+    <h2 class="section-title">Your conversations are yours. Full stop.</h2>
+    <p class="section-sub">No cloud. No account. No tracking. OurNook runs entirely on your Mac.</p>
+
+    <div class="privacy">
+      <div>
+        <ul>
+          <li><span class="check">✓</span><strong style="color:var(--text)"> Conversations never leave your Mac</strong> — all inference happens locally via Ollama</li>
+          <li><span class="check">✓</span><strong style="color:var(--text)"> No account required</strong> — download, install, use. No email, no signup</li>
+          <li><span class="check">✓</span><strong style="color:var(--text)"> No telemetry or analytics</strong> — we don't know you exist</li>
+          <li><span class="check">✓</span><strong style="color:var(--text)"> Your data stays yours</strong> — companion memory is stored locally in plain files you control</li>
+          <li><span class="check">✓</span><strong style="color:var(--text)"> Ollama handles the AI</strong> — we don't touch your prompts or responses</li>
+        </ul>
+      </div>
+      <div class="privacy-code">
+        <span class="cm"># Your config — stored locally</span><br>
+        [<span class="kw">ollama</span>]<br>
+        &nbsp;&nbsp;url = <span class="str">"http://localhost:11434"</span><br>
+        &nbsp;&nbsp;default_model = <span class="str">"qwen3:14b"</span><br>
+        <br>
+        <span class="cm"># OurNook never sees this.</span><br>
+        <span class="cm"># Everything stays on your machine.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Pricing ── -->
+<section id="pricing">
+  <div class="container" style="text-align:center;">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title" style="margin: 0 auto 12px;">Pay what you want</h2>
+    <p class="section-sub" style="margin: 0 auto 60px;">One payment. Own it forever. No subscriptions.</p>
+
+    <div class="pricing-grid" style="max-width:900px;">
+      <div class="price-card">
+        <h3>OurNook</h3>
+        <div class="price">$19</div>
+        <div class="desc">The full Mac app. Voice, memory, all features. Pay once, own it forever.</div>
+        <ul>
+          <li>Voice conversations (Whisper + Kokoro)</li>
+          <li>Companion memory & context</li>
+          <li>All Ollama models</li>
+          <li>Dark mode, overlay window</li>
+          <li>All future updates</li>
+        </ul>
+        <a href="https://gumroad.com/l/ournook" class="btn-primary">Get OurNook — $19</a>
+      </div>
+      <div class="price-card featured">
+        <div class="badge">Support the maker</div>
+        <h3>OurNook + Support</h3>
+        <div class="price">$49</div>
+        <div class="desc">Everything in OurNook, plus you directly support the development. Pay once, own it forever.</div>
+        <ul>
+          <li>Everything in OurNook</li>
+          <li>You fund ongoing development</li>
+          <li>Your name in the credits</li>
+          <li>All future updates</li>
+        </ul>
+        <a href="https://gumroad.com/l/ournook" class="btn-primary">Get OurNook + Support — $49</a>
+      </div>
+      <div class="price-card" style="border-color:#34d399; background:rgba(52,211,153,0.05);">
+        <h3>Donate</h3>
+        <div class="price" style="font-size:28px;">Custom</div>
+        <div class="desc">Like the app? Throw a coffee our way. Every little helps keep development going.</div>
+        <ul>
+          <li>Any amount, any time</li>
+          <li>Via Monzo</li>
+          <li>No account needed</li>
+        </ul>
+        <a href="https://monzo.me/annemarielee?d=Buy%20a%20Token%20for%20OurNook" target="_blank" rel="noopener" class="btn-primary" style="background:#E63946; box-shadow:none;">☕ Buy a Token →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── FAQ ── -->
+<section id="faq">
+  <div class="container" style="max-width: 720px;">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Common questions</h2>
+    <p class="section-sub">Anything else? <a href="mailto:hello@ournook.app" style="color:var(--accent);">Email us</a>.</p>
+
+    <div class="faq-item open">
+      <div class="faq-q">What Mac do I need?</div>
+      <div class="faq-a">OurNook runs on macOS 13 Ventura or later, on both Apple Silicon and Intel Macs. Performance depends on your Ollama model — smaller models like qwen3:14b run well on any recent Mac; larger models benefit from more RAM and Apple Silicon.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Do I need Ollama installed?</div>
+      <div class="faq-a">Yes — Ollama runs the AI models locally. It's free and takes about two minutes to set up. OurNook auto-detects your Ollama installation and connects to it automatically.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Which models does it support?</div>
+      <div class="faq-a">Any model available on Ollama. The default is qwen3:14b, which offers an excellent balance of speed and capability for everyday use. You can switch models at any time — try llama3.3, deepseek-r1, or anything else you've pulled.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is my data safe?</div>
+      <div class="faq-a">Completely. OurNook never sends your conversations anywhere. All processing happens on your Mac via Ollama. Your companion's memory is stored in plain files in your local app support directory — you can read, edit, or delete it anytime.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is this a subscription?</div>
+      <div class="faq-a">No. Pay once, own it forever. No subscription, no microtransactions, no "pro" meter. All features are included from day one and future updates are free.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How is this different from ChatGPT or Claude?</div>
+      <div class="faq-a">Those are cloud services — your data goes to their servers. OurNook is entirely local. Your companion has memory that persists across sessions and belongs to you. There's no rate limiting, no subscription, and no risk of your data being used for training.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I use my own voice?</div>
+      <div class="faq-a">Kokoro TTS supports a range of voice profiles. You can select from different voice presets in settings. Whisper handles transcription in any language you speak.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<div class="cta-section">
+  <h2>Your companion is waiting.</h2>
+  <p>One download. Zero subscriptions. All the privacy in the world.</p>
+  <a href="https://gumroad.com/l/ournook" class="btn-primary" style="font-size:16px; padding:16px 40px;">Download OurNook</a>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>OurNook &copy; 2026 &bull; <a href="#privacy">Privacy</a> &bull; <a href="mailto:hello@ournook.app">Contact</a></p>
+</footer>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('click', () => {
+      item.classList.toggle('open');
+    });
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+
+</body>
+</html>
