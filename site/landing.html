@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OurNook — Your AI Companion, Running Locally on Your Mac</title>
-  <meta name="description" content="A private, beautiful AI companion that lives in a floating window on your Mac. Voice conversations, long-term memory, and full control — no cloud required.">
+  <title>OurNook — Your AI Companion, Running Locally on Your Mac or PC</title>
+  <meta name="description" content="A private, beautiful AI companion that lives on your Mac or PC. Voice conversations, long-term memory, and full control — no cloud required.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -443,6 +443,38 @@
       border-color: var(--text-muted);
     }
 
+    /* ── Download cards (post-payment) ── */
+    .dl-card {
+      display: block;
+      padding: 24px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .dl-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .dl-card .dl-os {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .dl-card .dl-arch {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .dl-card .dl-cta {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-light);
+    }
+
     /* ── FAQ ── */
     .faq-item {
       border-bottom: 1px solid var(--border);
@@ -661,7 +693,7 @@
     <a href="#privacy">Privacy</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
-    <a href="https://gumroad.com/l/ournook" class="nav-cta">Get OurNook</a>
+    <a href="https://monzo.me/annemarielee/5?d=OurNook%20v0.5.2" target="_blank" rel="noopener" class="nav-cta">Get OurNook</a>
   </div>
 </nav>
 
@@ -674,10 +706,10 @@
   <h1>The AI companion that<br><span class="gradient">never leaves your desk</span></h1>
   <p>OurNook is a private, beautiful floating window on your Mac — voice conversations, real memory, and full control. Powered by Ollama. No cloud. No compromise.</p>
   <div class="hero-actions">
-    <a href="https://gumroad.com/l/ournook" class="btn-primary">Download for Mac</a>
+    <a href="https://monzo.me/annemarielee/5?d=OurNook%20v0.5.2" target="_blank" rel="noopener" class="btn-primary">Pay £5 &amp; download</a>
     <a href="#features" class="btn-secondary">See how it works</a>
   </div>
-  <p class="hero-macos"><strong>macOS 13 Ventura</strong> or later &bull; Apple Silicon & Intel &bull; Free to start</p>
+  <p class="hero-macos"><strong>macOS 13 Ventura</strong> or later &bull; Apple Silicon &amp; Intel &bull; From £5 via Monzo</p>
 </div>
 
 <!-- ── App Preview ── -->
@@ -833,34 +865,36 @@
   <div class="container" style="text-align:center;">
     <div class="section-label">Pricing</div>
     <h2 class="section-title" style="margin: 0 auto 12px;">Pay what you want</h2>
-    <p class="section-sub" style="margin: 0 auto 60px;">One payment. Own it forever. No subscriptions.</p>
+    <p class="section-sub" style="margin: 0 auto 16px;">One payment. Own it forever. No subscriptions.</p>
+    <p class="section-sub" style="margin: 0 auto 60px; max-width: 640px; font-size: 14px; opacity: 0.8;">Pay directly via <strong>Monzo</strong> — no middlemen, no Stripe, no PayPal. The link opens your Monzo app with the amount and a note prefilled; confirm and you're done. The download link appears immediately after.</p>
 
     <div class="pricing-grid" style="max-width:900px;">
       <div class="price-card">
         <h3>OurNook</h3>
-        <div class="price">$19</div>
-        <div class="desc">The full Mac app. Voice, memory, all features. Pay once, own it forever.</div>
+        <div class="price">£5</div>
+        <div class="desc">The full app. Voice, memory, all features. Pay once via Monzo, own it forever.</div>
         <ul>
-          <li>Voice conversations (Whisper + Kokoro)</li>
-          <li>Companion memory & context</li>
-          <li>All Ollama models</li>
-          <li>Dark mode, overlay window</li>
-          <li>All future updates</li>
+          <li>macOS + Windows desktop app</li>
+          <li>Companion memory &amp; persistent context</li>
+          <li>All Ollama models — pick your own</li>
+          <li>Voice (Whisper STT + Kokoro TTS)</li>
+          <li>All future updates, free</li>
         </ul>
-        <a href="https://gumroad.com/l/ournook" class="btn-primary">Get OurNook — $19</a>
+        <a href="https://monzo.me/annemarielee/5?d=OurNook%20v0.5.2" target="_blank" rel="noopener" class="btn-primary">Pay £5 via Monzo →</a>
       </div>
       <div class="price-card featured">
         <div class="badge">Support the maker</div>
         <h3>OurNook + Support</h3>
-        <div class="price">$49</div>
-        <div class="desc">Everything in OurNook, plus you directly support the development. Pay once, own it forever.</div>
+        <div class="price">£10</div>
+        <div class="desc">Everything in OurNook, plus you directly fund ongoing development. Pay once via Monzo, own it forever.</div>
         <ul>
           <li>Everything in OurNook</li>
           <li>You fund ongoing development</li>
           <li>Your name in the credits</li>
-          <li>All future updates</li>
+          <li>Priority on bug reports &amp; features</li>
+          <li>All future updates, free</li>
         </ul>
-        <a href="https://gumroad.com/l/ournook" class="btn-primary">Get OurNook + Support — $49</a>
+        <a href="https://monzo.me/annemarielee/10?d=OurNook%20v0.5.2%20%2B%20Support" target="_blank" rel="noopener" class="btn-primary">Pay £10 via Monzo →</a>
       </div>
       <div class="price-card" style="border-color:#34d399; background:rgba(52,211,153,0.05);">
         <h3>Donate</h3>
@@ -868,12 +902,38 @@
         <div class="desc">Like the app? Throw a coffee our way. Every little helps keep development going.</div>
         <ul>
           <li>Any amount, any time</li>
-          <li>Via Monzo</li>
-          <li>No account needed</li>
+          <li>Direct to Monzo, no middlemen</li>
+          <li>No account needed to pay</li>
         </ul>
-        <a href="https://monzo.me/annemarielee?d=Buy%20a%20Token%20for%20OurNook" target="_blank" rel="noopener" class="btn-primary" style="background:#E63946; box-shadow:none;">☕ Buy a Token →</a>
+        <a href="https://monzo.me/annemarielee?d=OurNook%20tip%20jar" target="_blank" rel="noopener" class="btn-primary" style="background:#E63946; box-shadow:none;">☕ Tip jar →</a>
       </div>
     </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Download (after you pay) ── -->
+<section id="download" style="padding: 80px 24px;">
+  <div class="container" style="max-width: 720px; text-align: center;">
+    <div class="section-label">After you pay</div>
+    <h2 class="section-title">Grab the app</h2>
+    <p class="section-sub" style="margin: 0 auto 32px;">Direct download links — no account, no email signup. Just pick your platform and run it.</p>
+
+    <div class="download-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; max-width: 640px; margin: 0 auto;">
+      <a href="https://github.com/TheSolai/OurNook/releases/latest" class="dl-card">
+        <div class="dl-os">macOS</div>
+        <div class="dl-arch">Apple Silicon · Intel</div>
+        <div class="dl-cta">Download .dmg →</div>
+      </a>
+      <a href="https://github.com/TheSolai/OurNook/releases/latest" class="dl-card">
+        <div class="dl-os">Windows</div>
+        <div class="dl-arch">Windows 10/11 · x64</div>
+        <div class="dl-cta">Download .zip →</div>
+      </a>
+    </div>
+
+    <p style="margin-top: 24px; font-size: 13px; opacity: 0.7;">First launch will warn about an unsigned app. On Mac: right-click → Open. On Windows: More info → Run anyway. The v0.5.2 release includes the install guide.</p>
   </div>
 </section>
 
@@ -907,6 +967,10 @@
       <div class="faq-a">No. Pay once, own it forever. No subscription, no microtransactions, no "pro" meter. All features are included from day one and future updates are free.</div>
     </div>
     <div class="faq-item">
+      <div class="faq-q">How does payment work?</div>
+      <div class="faq-a">Click a tier above. It opens your Monzo app (or monzo.com in a browser) with the amount and a note prefilled. Confirm and the money goes straight to me — no middlemen. After you pay, the same page shows you the download link. You'll need a Monzo account to pay, or any UK bank via the Monzo.me link.</div>
+    </div>
+    <div class="faq-item">
       <div class="faq-q">How is this different from ChatGPT or Claude?</div>
       <div class="faq-a">Those are cloud services — your data goes to their servers. OurNook is entirely local. Your companion has memory that persists across sessions and belongs to you. There's no rate limiting, no subscription, and no risk of your data being used for training.</div>
     </div>
@@ -920,8 +984,9 @@
 <!-- ── CTA ── -->
 <div class="cta-section">
   <h2>Your companion is waiting.</h2>
-  <p>One download. Zero subscriptions. All the privacy in the world.</p>
-  <a href="https://gumroad.com/l/ournook" class="btn-primary" style="font-size:16px; padding:16px 40px;">Download OurNook</a>
+  <p>Pay once via Monzo. Get the download link instantly. Zero subscriptions. All the privacy in the world.</p>
+  <a href="https://monzo.me/annemarielee/5?d=OurNook%20v0.5.2" target="_blank" rel="noopener" class="btn-primary" style="font-size:16px; padding:16px 40px;">Pay £5 via Monzo →</a>
+  <p style="margin-top: 24px; font-size: 14px; opacity: 0.7;">Or grab it for £10 to support development: <a href="https://monzo.me/annemarielee/10?d=OurNook%20v0.5.2%20%2B%20Support" target="_blank" rel="noopener" style="color: var(--accent);">£10 with support</a></p>
 </div>
 
 <!-- ── Footer ── -->
